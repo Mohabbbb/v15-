@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAQI Command Platform v19</title>
+<link rel="stylesheet" href="styles/main.css">
+<!-- SheetJS for Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Chart.js for charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ── LOADING SPLASH ────────────────────────────────────── -->
+<div id="loading-splash">
+  <div class="splash-logo">⬡ NAQI</div>
+  <div style="color:#64748b;font-size:13px;margin-bottom:20px;">Initializing Financial Engine...</div>
+  <div class="splash-bar"></div>
+</div>
+
+<!-- ── RECALC INDICATOR ──────────────────────────────────── -->
+<div id="recalc-bar"></div>
+
+<div id="app">
+
+  <!-- ── TOP BAR ────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar-logo">⬡ NAQI v19</div>
+    <div class="topbar-meta">
+      <div class="currency-toggle">
+        <button class="currency-btn active" data-currency="USD">USD</button>
+        <button class="currency-btn" data-currency="SYP">SYP</button>
+        <button class="currency-btn" data-currency="SAR">SAR</button>
+        <button class="currency-btn" data-currency="EUR">EUR</button>
+      </div>
+      <button class="btn btn-outline" id="btn-investor" style="font-size:11px; padding:6px 14px;">
+        📊 Investor View
+      </button>
+      <button class="btn btn-success" id="btn-export-excel" style="font-size:11px; padding:6px 14px;">
+        ⬇ Export Excel
+      </button>
+    </div>
+  </header>
+
+  <!-- ── TAB NAVIGATION ─────────────────────────────────────── -->
+  <nav class="tab-nav">
+    <!-- Overview -->
+    <span class="tab-section ts-overview">OVERVIEW</span>
+    <button class="tab-btn active" data-tab="tab-dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="tab-inputs">Inputs</button>
+
+    <!-- Operations -->
+    <span class="tab-section ts-ops">OPERATIONS</span>
+    <button class="tab-btn" data-tab="tab-production">Production</button>
+    <button class="tab-btn" data-tab="tab-cogs">COGS</button>
+    <button class="tab-btn" data-tab="tab-revenue">Revenue</button>
+
+    <!-- Finance -->
+    <span class="tab-section ts-finance">FINANCE</span>
+    <button class="tab-btn" data-tab="tab-pnl">P&amp;L</button>
+    <button class="tab-btn" data-tab="tab-cashflow">Cash Flow</button>
+    <button class="tab-btn" data-tab="tab-capex">CAPEX</button>
+    <button class="tab-btn" data-tab="tab-breakeven">Break-Even</button>
+    <button class="tab-btn" data-tab="tab-working-capital">Working Capital</button>
+
+    <!-- Valuation -->
+    <span class="tab-section ts-val">VALUATION</span>
+    <button class="tab-btn" data-tab="tab-dcf">DCF</button>
+    <button class="tab-btn" data-tab="tab-multiples">Multiples</button>
+    <button class="tab-btn" data-tab="tab-irr">IRR/ROI</button>
+
+    <!-- Risk -->
+    <span class="tab-section ts-risk">RISK</span>
+    <button class="tab-btn" data-tab="tab-monte-carlo">Monte Carlo</button>
+    <button class="tab-btn" data-tab="tab-fx-stress">FX Stress</button>
+    <button class="tab-btn" data-tab="tab-sensitivity">Sensitivity</button>
+
+    <!-- Strategy -->
+    <span class="tab-section ts-strategy">STRATEGY</span>
+    <button class="tab-btn" data-tab="tab-scenarios">Scenarios</button>
+    <button class="tab-btn" data-tab="tab-what-if">What-If</button>
+
+    <!-- Reports -->
+    <span class="tab-section ts-reports">REPORTS</span>
+    <button class="tab-btn" data-tab="tab-annual">Annual Summary</button>
+    <button class="tab-btn" data-tab="tab-kpis">KPI Tracker</button>
+    <button class="tab-btn" data-tab="tab-export">Export</button>
+
+    <!-- Info -->
+    <span class="tab-section ts-info">INFO</span>
+    <button class="tab-btn" data-tab="tab-assumptions">Assumptions</button>
+    <button class="tab-btn" data-tab="tab-about">About</button>
+  </nav>
+
+  <!-- ── TAB PANES ──────────────────────────────────────────── -->
+  <main class="main-content" style="overflow-y:auto;">
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="tab-pane active">
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">Revenue vs COGS (Monthly)</div>
+          <div class="chart-container"><canvas id="chart-rev-cogs"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header">Cumulative Cash Flow (72 months)</div>
+          <div class="chart-container"><canvas id="chart-cumcf"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INPUTS -->
+    <div id="tab-inputs" class="tab-pane">
+      <div class="card">
+        <div class="card-header">Factory Parameters</div>
+        <div class="inputs-grid">
+          <div class="input-group">
+            <label>CAPEX (USD)</label>
+            <input type="number" data-input="capex" value="512500" min="0">
+          </div>
+          <div class="input-group">
+            <label>Monthly OPEX (USD)</label>
+            <input type="number" data-input="opexMonthly" value="10100" min="0">
+          </div>
+          <div class="input-group">
+            <label>SYP / USD Rate</label>
+            <input type="number" data-input="fxRate" value="12000" min="1">
+          </div>
+          <div class="input-group">
+            <label>Price 0.5L (SYP)</label>
+            <input type="number" data-input="price500" value="2215" min="0">
+          </div>
+          <div class="input-group">
+            <label>Price 1.5L (SYP)</label>
+            <input type="number" data-input="price1500" value="2992" min="0">
+          </div>
+          <div class="input-group">
+            <label>Capacity Utilization</label>
+            <input type="range" data-input="capacityPct" value="0.75" min="0.1" max="1" step="0.05">
+            <span id="cap-pct-label" style="font-size:11px;color:#94a3b8;">75%</span>
+          </div>
+          <div class="input-group">
+            <label>0.5L Production Mix</label>
+            <input type="range" data-input="mix500" value="0.60" min="0.1" max="0.9" step="0.05">
+            <span id="mix-label" style="font-size:11px;color:#94a3b8;">60% / 40%</span>
+          </div>
+          <div class="input-group">
+            <label>Preform Cost (USD/unit)</label>
+            <input type="number" data-input="preformCost" value="0.026" step="0.001" min="0">
+          </div>
+          <div class="input-group">
+            <label>Label Cost (USD/unit)</label>
+            <input type="number" data-input="labelCost" value="0.008" step="0.001" min="0">
+          </div>
+          <div class="input-group">
+            <label>Cap Cost (USD/unit)</label>
+            <input type="number" data-input="capCost" value="0.0053" step="0.0001" min="0">
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-header">Financing</div>
+        <div class="inputs-grid">
+          <div class="input-group">
+            <label>Loan Amount (USD)</label>
+            <input type="number" data-input="loanAmount" value="0" min="0">
+          </div>
+          <div class="input-group">
+            <label>Annual Interest Rate</label>
+            <input type="number" data-input="interestRate" value="0.08" step="0.01" min="0" max="1">
+          </div>
+          <div class="input-group">
+            <label>Loan Term (months)</label>
+            <input type="number" data-input="loanTermMonths" value="60" min="1" max="360">
+          </div>
+        </div>
+      </div>
+
+      <!-- LIVE RESULTS PREVIEW (updates in real-time as you type) -->
+      <div class="card" style="margin-top:16px; border-left:3px solid var(--accent);">
+        <div class="card-header">📊 Live Results Preview</div>
+        <div class="kpi-grid" id="inputs-live-kpi"></div>
+      </div>
+    </div>
+
+    <!-- PRODUCTION -->
+    <div id="tab-production" class="tab-pane">
+      <div class="kpi-grid" id="prod-kpi-grid"></div>
+      <div class="card">
+        <div class="card-header">Monthly Production by Product</div>
+        <table class="data-table" id="prod-table"></table>
+      </div>
+    </div>
+
+    <!-- COGS -->
+    <div id="tab-cogs" class="tab-pane">
+      <div class="kpi-grid" id="cogs-kpi-grid"></div>
+      <div class="card">
+        <div class="card-header">Unit Cost Breakdown</div>
+        <table class="data-table" id="cogs-table"></table>
+      </div>
+    </div>
+
+    <!-- REVENUE -->
+    <div id="tab-revenue" class="tab-pane">
+      <div class="kpi-grid" id="rev-kpi-grid"></div>
+      <div class="card">
+        <div class="card-header">Revenue by Product</div>
+        <table class="data-table" id="rev-table"></table>
+      </div>
+    </div>
+
+    <!-- P&L -->
+    <div id="tab-pnl" class="tab-pane">
+      <div class="card">
+        <div class="card-header">Income Statement (Monthly / Annual)</div>
+        <table class="data-table" id="pnl-table"></table>
+      </div>
+    </div>
+
+    <!-- CASH FLOW -->
+    <div id="tab-cashflow" class="tab-pane">
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">72-Month Cash Flow Waterfall</div>
+        <div class="chart-container" style="height:320px;"><canvas id="chart-cashflow"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header">Monthly Detail</div>
+        <div style="max-height:400px; overflow-y:auto;">
+          <table class="data-table" id="cf-table"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAPEX -->
+    <div id="tab-capex" class="tab-pane">
+      <div class="kpi-grid" id="capex-kpi-grid"></div>
+      <div class="card">
+        <div class="card-header">CAPEX Breakdown & Depreciation Schedule</div>
+        <table class="data-table" id="capex-table"></table>
+      </div>
+    </div>
+
+    <!-- BREAK-EVEN -->
+    <div id="tab-breakeven" class="tab-pane">
+      <div class="kpi-grid" id="be-kpi-grid"></div>
+      <div class="card">
+        <div class="card-header">Break-Even Analysis</div>
+        <div class="chart-container"><canvas id="chart-breakeven"></canvas></div>
+      </div>
+    </div>
+
+    <!-- WORKING CAPITAL -->
+    <div id="tab-working-capital" class="tab-pane">
+      <div class="kpi-grid" id="wc-kpi-grid"></div>
+      <div class="card">
+        <div class="card-header">Cash Conversion Cycle</div>
+        <table class="data-table" id="wc-table"></table>
+      </div>
+    </div>
+
+    <!-- DCF -->
+    <div id="tab-dcf" class="tab-pane">
+      <div class="kpi-grid" id="dcf-kpi-grid"></div>
+      <div class="card">
+        <div class="card-header">DCF Valuation Model</div>
+        <table class="data-table" id="dcf-table"></table>
+      </div>
+    </div>
+
+    <!-- MULTIPLES -->
+    <div id="tab-multiples" class="tab-pane">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">Revenue Multiple Valuation</div>
+          <table class="data-table" id="rev-mult-table"></table>
+        </div>
+        <div class="card">
+          <div class="card-header">EBITDA Multiple Valuation</div>
+          <table class="data-table" id="ebitda-mult-table"></table>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-header">Blended Valuation Summary</div>
+        <div class="kpi-grid" id="blend-kpi-grid"></div>
+      </div>
+    </div>
+
+    <!-- IRR / ROI -->
+    <div id="tab-irr" class="tab-pane">
+      <div class="kpi-grid" id="irr-kpi-grid"></div>
+      <div class="card">
+        <div class="card-header">Annual Returns Summary</div>
+        <table class="data-table" id="irr-table"></table>
+      </div>
+    </div>
+
+    <!-- MONTE CARLO -->
+    <div id="tab-monte-carlo" class="tab-pane">
+      <div class="actions-bar">
+        <button class="btn btn-primary" id="btn-run-mc">▶ Run Simulation (10,000 iterations)</button>
+        <span id="mc-status" style="color:#94a3b8; font-size:12px;"></span>
+      </div>
+      <div class="kpi-grid" id="mc-kpi-grid"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">Net Income Distribution</div>
+          <div class="chart-container"><canvas id="chart-mc-netincome"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header">ROI Distribution</div>
+          <div class="chart-container"><canvas id="chart-mc-roi"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FX STRESS -->
+    <div id="tab-fx-stress" class="tab-pane">
+      <div class="card">
+        <div class="card-header">Net Income Heatmap: FX Rate × Capacity Utilization</div>
+        <div id="fx-heatmap"></div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-header">Price Sensitivity</div>
+        <table class="data-table" id="price-sensitivity-table"></table>
+      </div>
+    </div>
+
+    <!-- SENSITIVITY -->
+    <div id="tab-sensitivity" class="tab-pane">
+      <div class="card">
+        <div class="card-header">Variable Sensitivity (Net Income Impact)</div>
+        <div class="chart-container" style="height:320px;"><canvas id="chart-sensitivity"></canvas></div>
+      </div>
+    </div>
+
+    <!-- SCENARIOS -->
+    <div id="tab-scenarios" class="tab-pane">
+      <div class="card">
+        <div class="card-header">Scenario Comparison</div>
+        <table class="data-table" id="scenarios-table"></table>
+      </div>
+    </div>
+
+    <!-- WHAT-IF -->
+    <div id="tab-what-if" class="tab-pane">
+      <div class="card">
+        <div class="card-header">Reverse Calculator — Target Profit → Required Price/Volume</div>
+        <div class="inputs-grid">
+          <div class="input-group">
+            <label>Target Monthly Net Income (USD)</label>
+            <input type="number" id="wi-target" value="10000" min="0">
+          </div>
+          <div class="input-group">
+            <label>Solve For</label>
+            <select id="wi-solve-for">
+              <option value="price">Selling Price</option>
+              <option value="volume">Capacity %</option>
+              <option value="cogs">Preform Cost</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary" id="btn-what-if">Calculate</button>
+          </div>
+        </div>
+        <div id="wi-result" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <!-- ANNUAL SUMMARY -->
+    <div id="tab-annual" class="tab-pane">
+      <div class="card">
+        <div class="card-header">6-Year Annual Financial Summary</div>
+        <table class="data-table" id="annual-table"></table>
+      </div>
+    </div>
+
+    <!-- KPI TRACKER -->
+    <div id="tab-kpis" class="tab-pane">
+      <div class="kpi-grid" id="all-kpi-grid"></div>
+    </div>
+
+    <!-- EXPORT -->
+    <div id="tab-export" class="tab-pane">
+      <div class="card">
+        <div class="card-header">Export Options</div>
+        <div style="display:flex; flex-direction:column; gap:16px; max-width:400px;">
+          <button class="btn btn-success" id="btn-export-excel-2">
+            📊 Export Full Excel Report (5 sheets)
+          </button>
+          <button class="btn btn-outline" id="btn-investor-2">
+            📄 Open Investor Presentation
+          </button>
+          <button class="btn btn-outline" id="btn-print">
+            🖨️ Print / Save as PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASSUMPTIONS -->
+    <div id="tab-assumptions" class="tab-pane">
+      <div class="card">
+        <div class="card-header">Model Assumptions & Methodology</div>
+        <table class="data-table" id="assumptions-table"></table>
+      </div>
+    </div>
+
+    <!-- ABOUT -->
+    <div id="tab-about" class="tab-pane">
+      <div class="card">
+        <div class="card-header">About NAQI Command Platform</div>
+        <div style="max-width:640px; line-height:1.8; color:#94a3b8;">
+          <p><strong style="color:#e2e8f0;">NAQI Command Platform v19</strong></p>
+          <p>A dual-mode business intelligence and feasibility platform for water factory operations.</p>
+          <br>
+          <p><strong style="color:#e2e8f0;">Mode A:</strong> Standalone HTML — runs in any browser, no backend required.</p>
+          <p><strong style="color:#e2e8f0;">Mode B:</strong> SaaS — Node.js backend with auth, multi-tenancy, and billing.</p>
+          <br>
+          <p><strong style="color:#e2e8f0;">Modules:</strong> Financial Model, 72-Month Cashflow, 3-Method Valuation,
+          Monte Carlo Simulation, FX Stress Heatmap, Excel Export, Investor Mode.</p>
+          <br>
+          <p style="font-size:12px; color:#475569;">Version 19 · Built with pure HTML/JS · No frameworks required</p>
+        </div>
+      </div>
+    </div>
+
+  </main><!-- /main-content -->
+</div><!-- /app -->
+
+<!-- ── INVESTOR OVERLAY ──────────────────────────────────────── -->
+<div id="investor-overlay" class="investor-overlay">
+  <div class="investor-report" id="investor-report-body"></div>
+  <div style="text-align:center; padding-bottom:32px;">
+    <button class="btn btn-outline" id="btn-investor-close">✕ Close</button>
+    <button class="btn btn-success" onclick="window.print()" style="margin-left:12px;">🖨 Print</button>
+  </div>
+</div>
+
+<!-- ── TOAST ──────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<!-- ── SCRIPTS ────────────────────────────────────────────────── -->
+<script src="modules/constants.js"></script>
+<script src="modules/calcModel.js"></script>
+<script src="modules/cashflow.js"></script>
+<script src="modules/valuation.js"></script>
+<script src="modules/monteCarlo.js"></script>
+<script src="modules/fxStress.js"></script>
+<script src="modules/excelExport.js"></script>
+<script src="app.js"></script>
+
+<script>
+// ── Inline Tab Renderers ──────────────────────────────────────────
+const { fmtCurrency, fmtPct, fmtNum, state, toast, registerRenderer } = window.NAQI_APP;
+
+function $ (id) { return document.getElementById(id); }
+function kpiCard (label, value, sub, type = '') {
+  return `<div class="kpi-card ${type}">
+    <div class="kpi-label">${label}</div>
+    <div class="kpi-value">${value}</div>
+    ${sub ? `<div class="kpi-sub">${sub}</div>` : ''}
+  </div>`;
+}
+
+function tableHtml (headers, rows) {
+  return `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(r => `<tr>${r.map((c,i) => `<td class="${i>0?'td-num':''}">${c}</td>`).join('')}</tr>`).join('')}</tbody>`;
+}
+
+// ── INPUTS (Live Preview) ─────────────────────────────────────────
+registerRenderer('tab-inputs', () => {
+  const m = state.results;
+  const c = state.cfData;
+  if (!m) return;
+  const el = $('inputs-live-kpi');
+  if (!el) return;
+  el.innerHTML = [
+    kpiCard('Monthly Revenue', fmtCurrency(m.totalRevUSD), fmtNum(m.totalVolume) + ' bottles', 'positive'),
+    kpiCard('Gross Margin', fmtPct(m.grossMargin), fmtCurrency(m.grossProfit) + ' profit', m.grossMargin > 0.3 ? 'positive' : 'warning'),
+    kpiCard('EBITDA', fmtCurrency(m.ebitda), fmtPct(m.ebitda / (m.totalRevUSD || 1)) + ' margin', m.ebitda > 0 ? 'positive' : 'danger'),
+    kpiCard('Net Income', fmtCurrency(m.netIncome), fmtPct(m.netMargin) + ' margin', m.netIncome > 0 ? 'positive' : 'danger'),
+    kpiCard('ROI (Annual)', fmtPct(m.roi), fmtNum(m.paybackMo, 1) + ' mo payback', m.roi > 0.15 ? 'positive' : 'warning'),
+    kpiCard('Break-Even', fmtNum(m.breakevenUnits) + '/mo', fmtPct((m.totalVolume - m.breakevenUnits) / (m.totalVolume || 1)) + ' safety', ''),
+  ].join('');
+});
+
+// ── DASHBOARD ─────────────────────────────────────────────────────
+registerRenderer('tab-dashboard', () => {
+  const m = state.results;
+  const c = state.cfData;
+  if (!m) return;
+
+  $('kpi-grid').innerHTML = [
+    kpiCard('Monthly Revenue', fmtCurrency(m.totalRevUSD), fmtNum(m.totalRevSYP) + ' SYP', m.totalRevUSD > 0 ? 'positive' : ''),
+    kpiCard('EBITDA', fmtCurrency(m.ebitda), fmtPct(m.ebitda / (m.totalRevUSD || 1)), m.ebitda > 0 ? 'positive' : 'danger'),
+    kpiCard('Net Income', fmtCurrency(m.netIncome), 'Net margin ' + fmtPct(m.netMargin), m.netIncome > 0 ? 'positive' : 'danger'),
+    kpiCard('Gross Margin', fmtPct(m.grossMargin), 'on revenue', 'positive'),
+    kpiCard('Payback', fmtNum(m.paybackMo, 1) + ' mo', 'Equity recovery', ''),
+    kpiCard('ROI (Annual)', fmtPct(m.roi), 'Return on equity', m.roi > 0.15 ? 'positive' : 'warning'),
+    kpiCard('IRR', fmtPct(c ? c.irr : 0), '6-year project IRR', ''),
+    kpiCard('Break-Even', fmtNum(m.breakevenUnits) + ' units/mo', fmtCurrency(m.breakevenRevUSD) + ' rev', ''),
+  ].join('');
+
+  // Revenue vs COGS chart
+  drawBarChart('chart-rev-cogs',
+    ['Revenue', 'COGS', 'OPEX', 'Gross Profit', 'EBITDA', 'Net Income'],
+    [m.totalRevUSD, m.totalCOGS, m.opexMonthly, m.grossProfit, m.ebitda, m.netIncome],
+    ['#3b82f6','#ef4444','#f59e0b','#10b981','#06b6d4','#8b5cf6']
+  );
+
+  // Cumulative CF chart
+  if (c) {
+    const labels = c.months.filter((_,i) => i % 6 === 5).map(m => 'M' + m.month);
+    const vals   = c.months.filter((_,i) => i % 6 === 5).map(m => m.cumulativeCF);
+    drawLineChart('chart-cumcf', labels, vals, 'Cumulative CF (USD)');
+  }
+});
+
+// ── PRODUCTION ────────────────────────────────────────────────────
+registerRenderer('tab-production', () => {
+  const m = state.results;
+  if (!m) return;
+  $('prod-kpi-grid').innerHTML = [
+    kpiCard('Vol 0.5L/mo', fmtNum(m.vol500_month), 'bottles', ''),
+    kpiCard('Vol 1.5L/mo', fmtNum(m.vol1500_month), 'bottles', ''),
+    kpiCard('Total Vol/mo', fmtNum(m.totalVolume), 'bottles', ''),
+    kpiCard('Total Vol/yr', fmtNum(m.totalVolume * 12), 'bottles', ''),
+  ].join('');
+  $('prod-table').innerHTML = tableHtml(
+    ['Product', 'Units/hr', 'Hrs/day', 'Days/mo', 'Cap%', 'Units/month', 'Units/year'],
+    [
+      ['0.5L', '7,000', '16', '26', fmtPct(state.inputs.capacityPct || 0.75), fmtNum(m.vol500_month), fmtNum(m.vol500_month * 12)],
+      ['1.5L', '3,500', '16', '26', fmtPct(state.inputs.capacityPct || 0.75), fmtNum(m.vol1500_month), fmtNum(m.vol1500_month * 12)],
+      ['Total', '—', '—', '—', '—', fmtNum(m.totalVolume), fmtNum(m.totalVolume * 12)],
+    ]
+  );
+});
+
+// ── COGS ──────────────────────────────────────────────────────────
+registerRenderer('tab-cogs', () => {
+  const m = state.results;
+  if (!m) return;
+  const inp = state.inputs;
+  $('cogs-kpi-grid').innerHTML = [
+    kpiCard('Total COGS/mo', fmtCurrency(m.totalCOGS), 'Variable production cost', ''),
+    kpiCard('COGS/unit avg', fmtCurrency(m.totalCOGS / (m.totalVolume || 1), 4), 'USD per bottle', ''),
+    kpiCard('Gross Margin', fmtPct(m.grossMargin), 'Revenue - COGS', m.grossMargin > 0.3 ? 'positive' : 'warning'),
+  ].join('');
+
+  const C = window.NAQI_CONSTANTS;
+  $('cogs-table').innerHTML = tableHtml(
+    ['Component', 'Cost (USD/unit)', 'Notes'],
+    [
+      ['Preform',     '$' + (inp.preformCost || C.COGS.PREFORM_MID).toFixed(4), 'PET preform from China'],
+      ['Cap',         '$' + (inp.capCost    || C.COGS.CAPS).toFixed(4),        'Polypropylene cap'],
+      ['Label',       '$' + (inp.labelCost  || C.COGS.LABEL_MID).toFixed(4),   'Shrink sleeve label'],
+      ['Water',       '$' + C.COGS.WATER_PER_L.toFixed(4) + '/L',              'Well / municipal avg'],
+      ['Electricity', '$' + C.COGS.ELECTRICITY_PER_BOTTLE.toFixed(4),          'Per bottle blended'],
+    ]
+  );
+});
+
+// ── REVENUE ───────────────────────────────────────────────────────
+registerRenderer('tab-revenue', () => {
+  const m = state.results;
+  if (!m) return;
+  $('rev-kpi-grid').innerHTML = [
+    kpiCard('Total Rev/mo', fmtCurrency(m.totalRevUSD), fmtNum(m.totalRevSYP, 0) + ' SYP', 'positive'),
+    kpiCard('0.5L Rev/mo', fmtCurrency(m.rev500_syp / (state.inputs.fxRate || 12000)), fmtNum(m.rev500_syp, 0) + ' SYP', ''),
+    kpiCard('1.5L Rev/mo', fmtCurrency(m.rev1500_syp / (state.inputs.fxRate || 12000)), fmtNum(m.rev1500_syp, 0) + ' SYP', ''),
+    kpiCard('Annual Rev', fmtCurrency(m.totalRevUSD * 12), '', 'positive'),
+  ].join('');
+  $('rev-table').innerHTML = tableHtml(
+    ['Product', 'Volume/mo', 'Price (SYP)', 'Revenue (SYP)', 'Revenue (USD)', 'Rev Mix'],
+    [
+      ['0.5L', fmtNum(m.vol500_month), fmtNum(state.inputs.price500 || 2215), fmtNum(m.rev500_syp, 0), fmtCurrency(m.rev500_syp / (state.inputs.fxRate || 12000)), fmtPct(m.rev500_syp / (m.totalRevSYP || 1))],
+      ['1.5L', fmtNum(m.vol1500_month), fmtNum(state.inputs.price1500 || 2992), fmtNum(m.rev1500_syp, 0), fmtCurrency(m.rev1500_syp / (state.inputs.fxRate || 12000)), fmtPct(m.rev1500_syp / (m.totalRevSYP || 1))],
+      ['TOTAL', fmtNum(m.totalVolume), '—', fmtNum(m.totalRevSYP, 0), fmtCurrency(m.totalRevUSD), '100%'],
+    ]
+  );
+});
+
+// ── P&L ───────────────────────────────────────────────────────────
+registerRenderer('tab-pnl', () => {
+  const m = state.results;
+  if (!m) return;
+  const rows = [
+    ['Revenue', fmtCurrency(m.totalRevUSD), fmtCurrency(m.totalRevUSD * 12)],
+    ['— COGS', fmtCurrency(-m.totalCOGS), fmtCurrency(-m.totalCOGS * 12)],
+    ['= Gross Profit', fmtCurrency(m.grossProfit), fmtCurrency(m.grossProfit * 12)],
+    ['  Gross Margin', fmtPct(m.grossMargin), fmtPct(m.grossMargin)],
+    ['— OPEX', fmtCurrency(-m.opexMonthly), fmtCurrency(-m.opexMonthly * 12)],
+    ['= EBITDA', fmtCurrency(m.ebitda), fmtCurrency(m.ebitda * 12)],
+    ['— Depreciation', fmtCurrency(-m.monthlyDepr), fmtCurrency(-m.monthlyDepr * 12)],
+    ['= EBIT', fmtCurrency(m.ebit), fmtCurrency(m.ebit * 12)],
+    ['— Interest', fmtCurrency(-m.monthlyPayment), fmtCurrency(-m.monthlyPayment * 12)],
+    ['= EBT', fmtCurrency(m.ebt), fmtCurrency(m.ebt * 12)],
+    ['— Tax (15%)', fmtCurrency(-m.tax), fmtCurrency(-m.tax * 12)],
+    ['= Net Income', fmtCurrency(m.netIncome), fmtCurrency(m.netIncome * 12)],
+    ['  Net Margin', fmtPct(m.netMargin), fmtPct(m.netMargin)],
+  ];
+  $('pnl-table').innerHTML = tableHtml(['Line Item', 'Monthly', 'Annual'], rows);
+});
+
+// ── CASH FLOW ─────────────────────────────────────────────────────
+registerRenderer('tab-cashflow', () => {
+  const c = state.cfData;
+  if (!c) return;
+  const labels = c.months.map(m => 'M' + m.month);
+  const cumVals = c.months.map(m => m.cumulativeCF);
+  const fcfVals = c.months.map(m => m.freeCF);
+  drawDualLineChart('chart-cashflow', labels, cumVals, fcfVals, 'Cumulative CF', 'Monthly FCF');
+
+  const rows = c.months.slice(0, 24).map(m => [
+    'M' + m.month, m.rampPct + '%',
+    fmtCurrency(m.revUSD), fmtCurrency(m.ebitda),
+    fmtCurrency(m.netIncome), fmtCurrency(m.freeCF), fmtCurrency(m.cumulativeCF)
+  ]);
+  $('cf-table').innerHTML = tableHtml(
+    ['Month', 'Ramp', 'Revenue', 'EBITDA', 'Net Income', 'Free CF', 'Cumulative CF'],
+    rows
+  );
+});
+
+// ── CAPEX ─────────────────────────────────────────────────────────
+registerRenderer('tab-capex', () => {
+  const m = state.results;
+  if (!m) return;
+  const C = window.NAQI_CONSTANTS;
+  const machinery = m.capex * C.DEPRECIATION.MACHINERY_PCT;
+  const building  = m.capex * C.DEPRECIATION.BUILDING_PCT;
+  $('capex-kpi-grid').innerHTML = [
+    kpiCard('Total CAPEX', fmtCurrency(m.capex), 'USD', ''),
+    kpiCard('Equity', fmtCurrency(m.equity), 'Self-funded portion', ''),
+    kpiCard('Loan', fmtCurrency(m.loanAmount), 'Debt financing', m.loanAmount > 0 ? 'warning' : ''),
+    kpiCard('Monthly Depr', fmtCurrency(m.monthlyDepr), 'Depreciation charge', ''),
+  ].join('');
+  $('capex-table').innerHTML = tableHtml(
+    ['Asset', 'Value (USD)', 'Life (Years)', 'Annual Depreciation'],
+    [
+      ['Machinery & Equipment', fmtCurrency(machinery), C.DEPRECIATION.MACHINERY_YEARS + ' yrs', fmtCurrency(machinery / C.DEPRECIATION.MACHINERY_YEARS)],
+      ['Building / Civil Works', fmtCurrency(building),  C.DEPRECIATION.BUILDING_YEARS  + ' yrs', fmtCurrency(building  / C.DEPRECIATION.BUILDING_YEARS)],
+      ['TOTAL', fmtCurrency(m.capex), '—', fmtCurrency(m.monthlyDepr * 12)],
+    ]
+  );
+});
+
+// ── BREAK-EVEN ────────────────────────────────────────────────────
+registerRenderer('tab-breakeven', () => {
+  const m = state.results;
+  if (!m) return;
+  $('be-kpi-grid').innerHTML = [
+    kpiCard('Break-Even Units', fmtNum(m.breakevenUnits) + '/mo', 'Minimum production', ''),
+    kpiCard('Break-Even Revenue', fmtCurrency(m.breakevenRevUSD), 'Monthly minimum', ''),
+    kpiCard('Contribution Margin', fmtCurrency(m.contributionMargin, 4), 'Per unit (USD)', m.contributionMargin > 0 ? 'positive' : 'danger'),
+    kpiCard('Safety Margin', fmtPct((m.totalVolume - m.breakevenUnits) / (m.totalVolume || 1)), 'Volume above B/E', ''),
+  ].join('');
+  // Build break-even chart
+  const vols = [0, m.breakevenUnits * 0.5, m.breakevenUnits, m.totalVolume, m.totalVolume * 1.2];
+  const avgPrice = m.totalRevUSD / (m.totalVolume || 1);
+  const avgVC    = m.totalCOGS   / (m.totalVolume || 1);
+  const fc       = m.opexMonthly + m.monthlyDepr;
+  drawBreakevenChart('chart-breakeven', vols, vols.map(v => v * avgPrice), vols.map(v => fc + v * avgVC));
+});
+
+// ── WORKING CAPITAL ───────────────────────────────────────────────
+registerRenderer('tab-working-capital', () => {
+  const m = state.results;
+  if (!m) return;
+  const C = window.NAQI_CONSTANTS;
+  $('wc-kpi-grid').innerHTML = [
+    kpiCard('DSO', C.WORKING_CAPITAL.DSO + ' days', 'Days Sales Outstanding', ''),
+    kpiCard('DPO', C.WORKING_CAPITAL.DPO + ' days', 'Days Payable Outstanding', ''),
+    kpiCard('DIO', C.WORKING_CAPITAL.DIO + ' days', 'Days Inventory Outstanding', ''),
+    kpiCard('CCC', m.CCC + ' days', 'Cash Conversion Cycle', m.CCC < 30 ? 'positive' : 'warning'),
+    kpiCard('WC Needed', fmtCurrency(m.workingCapitalNeed), 'Working capital requirement', ''),
+  ].join('');
+  $('wc-table').innerHTML = tableHtml(
+    ['Metric', 'Days', 'Formula', 'Impact'],
+    [
+      ['DSO (Receivables)', C.WORKING_CAPITAL.DSO + ' d', 'Avg collection time', 'Cash tied up in receivables'],
+      ['DIO (Inventory)', C.WORKING_CAPITAL.DIO + ' d', 'Avg inventory holding', 'Raw material buffer'],
+      ['DPO (Payables)', C.WORKING_CAPITAL.DPO + ' d', 'Avg payment to suppliers', 'Delayed outflow (positive)'],
+      ['CCC = DSO + DIO - DPO', m.CCC + ' d', 'Net cycle', 'Working capital funding gap'],
+    ]
+  );
+});
+
+// ── DCF ───────────────────────────────────────────────────────────
+registerRenderer('tab-dcf', () => {
+  const v = state.valData;
+  if (!v) return;
+  $('dcf-kpi-grid').innerHTML = [
+    kpiCard('Operating PV', fmtCurrency(v.dcf.operatingPV), '72-mo DCF', 'positive'),
+    kpiCard('Terminal Value', fmtCurrency(v.dcf.terminalValue), 'Gordon growth', ''),
+    kpiCard('PV Terminal', fmtCurrency(v.dcf.pvTerminal), 'Discounted to today', ''),
+    kpiCard('Equity Value', fmtCurrency(v.dcf.equityValue), 'Net of debt', 'positive'),
+    kpiCard('Enterprise Value', fmtCurrency(v.dcf.enterpriseValue), 'Incl. debt', ''),
+    kpiCard('WACC', '12%', 'Discount rate used', ''),
+  ].join('');
+  $('dcf-table').innerHTML = tableHtml(
+    ['Component', 'Value (USD)', 'Notes'],
+    [
+      ['PV of 72-mo Free Cash Flows', fmtCurrency(v.dcf.operatingPV), 'Monthly discount at 12% WACC'],
+      ['Terminal Value (at Year 6)', fmtCurrency(v.dcf.terminalValue), '3% perpetuity growth'],
+      ['PV of Terminal Value', fmtCurrency(v.dcf.pvTerminal), 'Discounted to Year 0'],
+      ['Total Enterprise Value', fmtCurrency(v.dcf.equityValue + v.dcf.pvTerminal), ''],
+      ['Less: Debt', fmtCurrency(-(state.inputs.loanAmount || 0)), ''],
+      ['= Equity Value', fmtCurrency(v.dcf.equityValue), ''],
+    ]
+  );
+});
+
+// ── MULTIPLES ─────────────────────────────────────────────────────
+registerRenderer('tab-multiples', () => {
+  const v = state.valData;
+  if (!v) return;
+  $('rev-mult-table').innerHTML = tableHtml(
+    ['Multiple', 'Annual Revenue', 'Equity Value'],
+    [
+      [v.revenue.multipleLow  + '× (Low)',  fmtCurrency(v.revenue.annualRevUSD), fmtCurrency(v.revenue.valueLow)],
+      [((v.revenue.multipleLow + v.revenue.multipleHigh) / 2) + '× (Mid)', fmtCurrency(v.revenue.annualRevUSD), fmtCurrency(v.revenue.valueMid)],
+      [v.revenue.multipleHigh + '× (High)', fmtCurrency(v.revenue.annualRevUSD), fmtCurrency(v.revenue.valueHigh)],
+    ]
+  );
+  $('ebitda-mult-table').innerHTML = tableHtml(
+    ['Multiple', 'Annual EBITDA', 'Equity Value'],
+    [
+      [v.ebitda.multipleLow  + '× (Low)',  fmtCurrency(v.annualEBITDA), fmtCurrency(v.ebitda.valueLow)],
+      [((v.ebitda.multipleLow + v.ebitda.multipleHigh) / 2) + '× (Mid)', fmtCurrency(v.annualEBITDA), fmtCurrency(v.ebitda.valueMid)],
+      [v.ebitda.multipleHigh + '× (High)', fmtCurrency(v.annualEBITDA), fmtCurrency(v.ebitda.valueHigh)],
+    ]
+  );
+  $('blend-kpi-grid').innerHTML = [
+    kpiCard('DCF Equity Value', fmtCurrency(v.dcf.equityValue), 'Discounted cash flows', 'positive'),
+    kpiCard('Revenue Multiple (mid)', fmtCurrency(v.revenue.valueMid), '2.25× revenue', ''),
+    kpiCard('EBITDA Multiple (mid)', fmtCurrency(v.ebitda.valueMid), '5.5× EBITDA', ''),
+    kpiCard('Blended Valuation', fmtCurrency(v.blended), 'Average of 3 methods', 'positive'),
+    kpiCard('Enterprise Value', fmtCurrency(v.enterpriseValue), 'Incl. all debt', ''),
+  ].join('');
+});
+
+// ── IRR/ROI ───────────────────────────────────────────────────────
+registerRenderer('tab-irr', () => {
+  const m = state.results;
+  const c = state.cfData;
+  if (!m || !c) return;
+  $('irr-kpi-grid').innerHTML = [
+    kpiCard('IRR (Annual)', fmtPct(c.irr), '6-year project IRR', c.irr > 0.20 ? 'positive' : 'warning'),
+    kpiCard('ROI (Annual)', fmtPct(m.roi), 'Net income / Equity', m.roi > 0.15 ? 'positive' : 'warning'),
+    kpiCard('ROE (Annual)', fmtPct(m.roe), 'Return on equity', ''),
+    kpiCard('Payback', fmtNum(m.paybackMo, 1) + ' months', 'Equity recovery', ''),
+    kpiCard('Annual Net Income', fmtCurrency(m.annualNetIncome), '', m.annualNetIncome > 0 ? 'positive' : 'danger'),
+    kpiCard('Annual EBITDA', fmtCurrency(m.ebitda * 12), '', 'positive'),
+  ].join('');
+  $('irr-table').innerHTML = tableHtml(
+    ['Year', 'Revenue', 'EBITDA', 'Net Income', 'Free CF', 'Cumulative CF'],
+    c.annual.map(y => [
+      'Year ' + y.year,
+      fmtCurrency(y.revUSD),
+      fmtCurrency(y.ebitda),
+      fmtCurrency(y.netIncome),
+      fmtCurrency(y.freeCF),
+      fmtCurrency(y.cumulativeCF),
+    ])
+  );
+});
+
+// ── MONTE CARLO ───────────────────────────────────────────────────
+registerRenderer('tab-monte-carlo', () => {
+  if (state.mcData) renderMCResults();
+});
+
+$('btn-run-mc') && $('btn-run-mc').addEventListener('click', () => {
+  $('mc-status').textContent = 'Running 10,000 simulations...';
+  setTimeout(() => {
+    state.mcData = window.monteCarlo.run(state.inputs, 10000);
+    $('mc-status').textContent = '✅ Complete';
+    renderMCResults();
+    toast('Monte Carlo complete — 10,000 iterations');
+  }, 50);
+});
+
+function renderMCResults() {
+  const mc = state.mcData;
+  if (!mc) return;
+  const ni = mc.netIncome;
+  $('mc-kpi-grid').innerHTML = [
+    kpiCard('P50 Net Income', fmtCurrency(ni.median), 'Median scenario', ni.median > 0 ? 'positive' : 'danger'),
+    kpiCard('P5 (Downside)', fmtCurrency(ni.p5), '5th percentile', 'danger'),
+    kpiCard('P95 (Upside)', fmtCurrency(ni.p95), '95th percentile', 'positive'),
+    kpiCard('Prob. Profitable', fmtPct(ni.probPositive), '% of simulations', ni.probPositive > 0.7 ? 'positive' : 'warning'),
+    kpiCard('Mean Net Income', fmtCurrency(ni.mean), 'Average outcome', ''),
+    kpiCard('Std Deviation', fmtCurrency(ni.std), 'Risk measure', ''),
+  ].join('');
+
+  drawHistogram('chart-mc-netincome', mc.netIncome.raw, 'Net Income (USD)', '#3b82f6');
+  drawHistogram('chart-mc-roi', mc.roi.raw.map(v => v * 100), 'ROI (%)', '#10b981');
+}
+
+// ── FX STRESS ─────────────────────────────────────────────────────
+registerRenderer('tab-fx-stress', () => {
+  const fx = state.fxData;
+  if (!fx) return;
+  const C = window.NAQI_CONSTANTS;
+
+  let html = '<table class="heatmap-table"><thead><tr><th>SYP/USD ↓ | Cap% →</th>';
+  fx.capacities.forEach(c => { html += `<th>${Math.round(c * 100)}%</th>`; });
+  html += '</tr></thead><tbody>';
+  fx.matrix.forEach((row, i) => {
+    html += `<tr><td><strong>${C.FX_SCENARIOS[i].label}<br>${fx.fxRates[i].toLocaleString()}</strong></td>`;
+    row.forEach(cell => {
+      const cls = cell.netIncome > 5000 ? 'heat-high' : cell.netIncome > 0 ? 'heat-mid' : cell.netIncome > -3000 ? 'heat-low' : 'heat-neg';
+      html += `<td class="${cls}" title="${cell.status}">${fmtCurrency(cell.netIncome)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  $('fx-heatmap').innerHTML = html;
+
+  $('price-sensitivity-table').innerHTML = tableHtml(
+    ['Price Change', 'Net Income', 'EBITDA', 'ROI'],
+    fx.priceSensitivity.map(row => [
+      (row.pct >= 0 ? '+' : '') + Math.round(row.pct * 100) + '%',
+      fmtCurrency(row.netIncome), fmtCurrency(row.ebitda), fmtPct(row.roi)
+    ])
+  );
+});
+
+// ── SENSITIVITY ───────────────────────────────────────────────────
+registerRenderer('tab-sensitivity', () => {
+  const base = state.inputs;
+  const baseModel = window.calcModel.run(base);
+  const baseNI = baseModel.netIncome;
+
+  const variables = [
+    { key: 'capacityPct', label: 'Capacity %',     lo: -0.20, hi: 0.20, abs: true },
+    { key: 'price500',    label: 'Price 0.5L',     lo: -0.20, hi: 0.20 },
+    { key: 'price1500',   label: 'Price 1.5L',     lo: -0.20, hi: 0.20 },
+    { key: 'fxRate',      label: 'SYP/USD Rate',   lo: -0.30, hi: 0.50 },
+    { key: 'preformCost', label: 'Preform Cost',   lo: -0.30, hi: 0.30 },
+    { key: 'opexMonthly', label: 'OPEX',           lo: -0.30, hi: 0.50 },
+    { key: 'capex',       label: 'CAPEX',          lo: -0.20, hi: 0.20 },
+  ];
+
+  const labels = [];
+  const loDeltas = [];
+  const hiDeltas = [];
+
+  variables.forEach(v => {
+    const baseVal = base[v.key] || 0;
+    const loInp = Object.assign({}, base);
+    const hiInp = Object.assign({}, base);
+    if (v.abs) {
+      loInp[v.key] = Math.max(0.1, baseVal + v.lo);
+      hiInp[v.key] = Math.min(1.0, baseVal + v.hi);
+    } else {
+      loInp[v.key] = baseVal * (1 + v.lo);
+      hiInp[v.key] = baseVal * (1 + v.hi);
+    }
+    const loNI = window.calcModel.run(loInp).netIncome - baseNI;
+    const hiNI = window.calcModel.run(hiInp).netIncome - baseNI;
+    labels.push(v.label);
+    loDeltas.push(Math.min(loNI, hiNI));
+    hiDeltas.push(Math.max(loNI, hiNI));
+  });
+
+  // Sort by total swing descending
+  const indices = labels.map((_, i) => i);
+  indices.sort((a, b) => (hiDeltas[b] - loDeltas[b]) - (hiDeltas[a] - loDeltas[a]));
+
+  const sortedLabels = indices.map(i => labels[i]);
+  const sortedLo     = indices.map(i => loDeltas[i]);
+  const sortedHi     = indices.map(i => hiDeltas[i]);
+
+  destroyChart('chart-sensitivity');
+  const ctx = $('chart-sensitivity');
+  if (!ctx) return;
+  charts['chart-sensitivity'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sortedLabels,
+      datasets: [
+        { label: 'Downside', data: sortedLo, backgroundColor: '#ef4444aa', borderColor: '#ef4444', borderWidth: 1 },
+        { label: 'Upside',   data: sortedHi, backgroundColor: '#10b981aa', borderColor: '#10b981', borderWidth: 1 },
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8' } } },
+      scales: {
+        x: { ticks: { color: '#94a3b8', callback: v => '$' + v.toLocaleString() }, grid: { color: '#2d3748' } },
+        y: { ticks: { color: '#94a3b8' }, grid: { color: '#2d3748' } }
+      }
+    }
+  });
+});
+
+// ── SCENARIOS ─────────────────────────────────────────────────────
+registerRenderer('tab-scenarios', () => {
+  const base = state.inputs;
+  const scenarios = [
+    { name: 'Base Case', mods: {} },
+    { name: 'Bear Case',  mods: { capacityPct: 0.50, fxRate: 20000 } },
+    { name: 'Bull Case',  mods: { capacityPct: 0.90, price500: 2800, price1500: 3500 } },
+    { name: 'Crisis',     mods: { capacityPct: 0.40, fxRate: 35000, price500: 1500 } },
+    { name: 'Expansion',  mods: { capacityPct: 1.00, price500: 3000, price1500: 4000 } },
+  ];
+  const rows = scenarios.map(s => {
+    const inp = Object.assign({}, base, s.mods);
+    const m   = window.calcModel.run(inp);
+    return [s.name, fmtCurrency(m.totalRevUSD), fmtCurrency(m.ebitda),
+            fmtCurrency(m.netIncome), fmtPct(m.grossMargin), fmtPct(m.roi), fmtNum(m.paybackMo, 1) + ' mo'];
+  });
+  $('scenarios-table').innerHTML = tableHtml(
+    ['Scenario', 'Revenue/mo', 'EBITDA', 'Net Income', 'Gross Margin', 'ROI', 'Payback'],
+    rows
+  );
+});
+
+// ── WHAT-IF ───────────────────────────────────────────────────────
+$('btn-what-if') && $('btn-what-if').addEventListener('click', () => {
+  const target  = parseFloat($('wi-target').value) || 10000;
+  const solveFor = $('wi-solve-for').value;
+  const base    = Object.assign({}, state.inputs);
+  let result    = '';
+
+  if (solveFor === 'price') {
+    // Binary search on price multiplier
+    let lo = 0.5, hi = 5.0, mid;
+    for (let i = 0; i < 50; i++) {
+      mid = (lo + hi) / 2;
+      const inp = Object.assign({}, base, { price500: base.price500 * mid, price1500: base.price1500 * mid });
+      const m   = window.calcModel.run(inp);
+      if (m.netIncome < target) lo = mid; else hi = mid;
+    }
+    const reqPrice500  = (base.price500  * mid).toFixed(0);
+    const reqPrice1500 = (base.price1500 * mid).toFixed(0);
+    result = `To achieve ${fmtCurrency(target)}/mo net income:<br>
+      Required 0.5L price: <strong>${fmtNum(reqPrice500)} SYP</strong><br>
+      Required 1.5L price: <strong>${fmtNum(reqPrice1500)} SYP</strong>`;
+  } else if (solveFor === 'volume') {
+    let lo = 0.1, hi = 1.0, mid;
+    for (let i = 0; i < 50; i++) {
+      mid = (lo + hi) / 2;
+      const m = window.calcModel.run(Object.assign({}, base, { capacityPct: mid }));
+      if (m.netIncome < target) lo = mid; else hi = mid;
+    }
+    result = `Required capacity utilization: <strong>${Math.round(mid * 100)}%</strong>`;
+  } else {
+    let lo = 0.001, hi = 0.10, mid;
+    for (let i = 0; i < 50; i++) {
+      mid = (lo + hi) / 2;
+      const m = window.calcModel.run(Object.assign({}, base, { preformCost: mid }));
+      if (m.netIncome > target) lo = mid; else hi = mid;
+    }
+    result = `Maximum allowable preform cost: <strong>$${mid.toFixed(4)}/unit</strong>`;
+  }
+
+  $('wi-result').innerHTML = `<div class="card" style="border-left:4px solid #3b82f6;">
+    <div style="font-size:14px; line-height:2;">${result}</div>
+  </div>`;
+});
+
+// ── ANNUAL ────────────────────────────────────────────────────────
+registerRenderer('tab-annual', () => {
+  const c = state.cfData;
+  if (!c) return;
+  $('annual-table').innerHTML = tableHtml(
+    ['Year', 'Revenue', 'EBITDA', 'EBITDA%', 'Net Income', 'Free CF', 'Cumulative CF', '0.5L Units', '1.5L Units'],
+    c.annual.map(y => [
+      'Year ' + y.year,
+      fmtCurrency(y.revUSD), fmtCurrency(y.ebitda),
+      fmtPct(y.ebitda / (y.revUSD || 1)),
+      fmtCurrency(y.netIncome), fmtCurrency(y.freeCF), fmtCurrency(y.cumulativeCF),
+      fmtNum(y.vol500), fmtNum(y.vol1500),
+    ])
+  );
+});
+
+// ── KPI TRACKER ───────────────────────────────────────────────────
+registerRenderer('tab-kpis', () => {
+  const m = state.results;
+  const c = state.cfData;
+  const v = state.valData;
+  if (!m) return;
+  $('all-kpi-grid').innerHTML = [
+    kpiCard('Monthly Revenue', fmtCurrency(m.totalRevUSD), '', 'positive'),
+    kpiCard('Annual Revenue', fmtCurrency(m.totalRevUSD * 12), '', ''),
+    kpiCard('Gross Profit/mo', fmtCurrency(m.grossProfit), '', m.grossProfit > 0 ? 'positive' : 'danger'),
+    kpiCard('Gross Margin', fmtPct(m.grossMargin), '', ''),
+    kpiCard('EBITDA/mo', fmtCurrency(m.ebitda), '', m.ebitda > 0 ? 'positive' : 'danger'),
+    kpiCard('EBITDA Margin', fmtPct(m.ebitda / (m.totalRevUSD || 1)), '', ''),
+    kpiCard('Net Income/mo', fmtCurrency(m.netIncome), '', m.netIncome > 0 ? 'positive' : 'danger'),
+    kpiCard('Net Margin', fmtPct(m.netMargin), '', ''),
+    kpiCard('IRR', fmtPct(c ? c.irr : 0), '', ''),
+    kpiCard('ROI (Annual)', fmtPct(m.roi), '', m.roi > 0.15 ? 'positive' : ''),
+    kpiCard('Payback (months)', fmtNum(m.paybackMo, 1), '', ''),
+    kpiCard('Break-Even Units', fmtNum(m.breakevenUnits), '/month', ''),
+    kpiCard('Blended Valuation', v ? fmtCurrency(v.blended) : '—', 'Equity value', 'positive'),
+    kpiCard('CCC', m.CCC + ' days', 'Cash conversion cycle', ''),
+    kpiCard('WC Requirement', fmtCurrency(m.workingCapitalNeed), '', ''),
+    kpiCard('CAPEX', fmtCurrency(m.capex), '', ''),
+    kpiCard('Total Volume/mo', fmtNum(m.totalVolume), 'bottles', ''),
+    kpiCard('Revenue SYP', fmtNum(m.totalRevSYP, 0), 'SYP/month', ''),
+  ].join('');
+});
+
+// ── ASSUMPTIONS ───────────────────────────────────────────────────
+registerRenderer('tab-assumptions', () => {
+  const C = window.NAQI_CONSTANTS;
+  $('assumptions-table').innerHTML = tableHtml(
+    ['Assumption', 'Value', 'Source / Notes'],
+    [
+      ['CAPEX', '$512,500', 'Equipment + civil works'],
+      ['OPEX (monthly)', '$10,100', 'Labour, utilities, overhead'],
+      ['SYP/USD rate', '12,000', 'Market rate at model build'],
+      ['0.5L speed', '7,000/hr', 'Machine specification'],
+      ['1.5L speed', '3,500/hr', 'Machine specification'],
+      ['Operating hours', '16/day, 26 days/mo', 'Factory schedule'],
+      ['Default capacity', '75%', 'Steady state utilization'],
+      ['Preform cost', '$0.026/unit', 'Chinese supplier mid-range'],
+      ['Label cost', '$0.008/unit', 'Shrink sleeve mid-range'],
+      ['Cap cost', '$0.0053/unit', 'PP cap from China'],
+      ['Water cost', '$0.0004/L', 'Well water avg'],
+      ['Electricity', '$0.0008/bottle', 'Blended tariff'],
+      ['Tax rate', '15%', 'Syrian corporate tax'],
+      ['WACC', '12%', 'DCF discount rate'],
+      ['Terminal growth', '3%', 'Perpetuity growth rate'],
+      ['DSO', '30 days', 'Accounts receivable'],
+      ['DPO', '45 days', 'Accounts payable'],
+      ['DIO', '20 days', 'Inventory holding'],
+      ['Ramp-up period', '6 months (40%→100%)', 'Linear ramp'],
+    ]
+  );
+});
+
+// ── EXPORT TAB ────────────────────────────────────────────────────
+$('btn-export-excel-2') && $('btn-export-excel-2').addEventListener('click', () => window.excelExport.exportAll(state.inputs));
+$('btn-investor-2')     && $('btn-investor-2').addEventListener('click', () => $('btn-investor').click());
+$('btn-print')          && $('btn-print').addEventListener('click', () => window.print());
+
+// ── Range label updates ───────────────────────────────────────────
+document.querySelectorAll('[data-input="capacityPct"]').forEach(el => {
+  el.addEventListener('input', () => {
+    const lbl = $('cap-pct-label');
+    if (lbl) lbl.textContent = Math.round(el.value * 100) + '%';
+  });
+});
+document.querySelectorAll('[data-input="mix500"]').forEach(el => {
+  el.addEventListener('input', () => {
+    const lbl = $('mix-label');
+    if (lbl) lbl.textContent = Math.round(el.value * 100) + '% / ' + Math.round((1 - el.value) * 100) + '%';
+  });
+});
+
+// ── Chart helpers ─────────────────────────────────────────────────
+const charts = {};
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function drawBarChart(id, labels, data, colors) {
+  destroyChart(id);
+  const ctx = $(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: { x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#2d3748' } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#2d3748' } } } }
+  });
+}
+
+function drawLineChart(id, labels, data, label) {
+  destroyChart(id);
+  const ctx = $(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ label, data, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.3, pointRadius: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8' } } },
+      scales: { x: { ticks: { color: '#94a3b8', maxTicksLimit: 12 }, grid: { color: '#2d3748' } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#2d3748' } } } }
+  });
+}
+
+function drawDualLineChart(id, labels, data1, data2, lbl1, lbl2) {
+  destroyChart(id);
+  const ctx = $(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: lbl1, data: data1, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)', fill: true, tension: 0.3, pointRadius: 0 },
+      { label: lbl2, data: data2, borderColor: '#10b981', tension: 0.3, pointRadius: 0 },
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8' } } },
+      scales: { x: { ticks: { color: '#94a3b8', maxTicksLimit: 12 }, grid: { color: '#2d3748' } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#2d3748' } } } }
+  });
+}
+
+function drawBreakevenChart(id, vols, revs, costs) {
+  destroyChart(id);
+  const ctx = $(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, {
+    type: 'line',
+    data: { labels: vols.map(v => Math.round(v).toLocaleString()),
+      datasets: [
+        { label: 'Revenue', data: revs,  borderColor: '#10b981', tension: 0.3 },
+        { label: 'Total Cost', data: costs, borderColor: '#ef4444', tension: 0.3 },
+      ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8' } } },
+      scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: '#2d3748' } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#2d3748' } } } }
+  });
+}
+
+function drawHistogram(id, raw, label, color) {
+  destroyChart(id);
+  const ctx = $(id);
+  if (!ctx) return;
+  const min = Math.min(...raw), max = Math.max(...raw);
+  const bins = 30;
+  const step = (max - min) / bins;
+  const counts = new Array(bins).fill(0);
+  raw.forEach(v => {
+    const bin = Math.min(Math.floor((v - min) / step), bins - 1);
+    counts[bin]++;
+  });
+  const labels = counts.map((_, i) => Math.round(min + i * step).toLocaleString());
+  charts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label, data: counts, backgroundColor: color + '99', borderColor: color, borderWidth: 1 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { color: '#94a3b8', maxTicksLimit: 8 }, grid: { color: '#2d3748' } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#2d3748' } } } }
+  });
+}
+</script>
+</body>
+</html>
